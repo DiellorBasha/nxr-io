@@ -1,0 +1,47 @@
+/**
+ * @nxr/io
+ *
+ * Zarr v3 read/write for NXR packages.
+ *
+ * @example
+ * ```ts
+ * import { open, read, meta, attrs, group, sparse } from '@nxr/io';
+ *
+ * const store = await open('https://data.nxr.io/brain.zarr');
+ * const verts = await read(store, 'manifold/vertices', { as: 'float32' });
+ * const info  = await meta(store, 'manifold/vertices');
+ * const a     = await attrs.read(store, 'manifold');
+ * const mass  = await sparse.read(store, 'operators/mass');
+ * ```
+ */
+
+// Types
+export type {
+  TypedArray,
+  DataType,
+  OpenOptions,
+  ReadOptions,
+  WriteOptions,
+  ArrayMeta,
+  SparseCOO,
+  Attrs,
+} from './types.js';
+
+// Store
+export type { Store, ReadStore, WriteStore } from './store.js';
+export { open, create } from './store.js';
+
+// Read
+export { read, meta } from './read.js';
+
+// Write
+export { write } from './write.js';
+
+// Attributes
+export { attrs } from './attrs.js';
+
+// Groups
+export { group } from './group.js';
+
+// Sparse
+export { sparse } from './sparse.js';
