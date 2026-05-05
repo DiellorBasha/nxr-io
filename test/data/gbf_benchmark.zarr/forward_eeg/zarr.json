@@ -1,0 +1,15 @@
+{
+  "attributes": {
+    "nchan": 128,
+    "nsource": 20484,
+    "source_ori": 1,
+    "montage": "biosemi128",
+    "bem_conductivity": [
+      0.3,
+      0.006,
+      0.3
+    ]
+  },
+  "zarr_format": 3,
+  "node_type": "group"
+}

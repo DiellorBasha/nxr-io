@@ -1,0 +1,8 @@
+{
+  "attributes": {
+    "n_channels": 128,
+    "kind": "identity_scaled"
+  },
+  "zarr_format": 3,
+  "node_type": "group"
+}

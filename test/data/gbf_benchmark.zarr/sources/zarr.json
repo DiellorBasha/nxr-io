@@ -1,0 +1,11 @@
+{
+  "attributes": {
+    "n_patterns": 200,
+    "n_vertices": 20484,
+    "origin": "synthetic_gaussian_blobs",
+    "normalization": "unit_max",
+    "note": "Phase 1 synthetic patterns. Replace with NeuroVault in Phase 2."
+  },
+  "zarr_format": 3,
+  "node_type": "group"
+}

@@ -1,0 +1,11 @@
+{
+  "attributes": {
+    "schema": "nxr.gbf_bench@1.0",
+    "description": "GBF benchmark data (Wang et al. reproduction)",
+    "n_sources": 20484,
+    "n_patterns": 200,
+    "spacing": "ico5"
+  },
+  "zarr_format": 3,
+  "node_type": "group"
+}
