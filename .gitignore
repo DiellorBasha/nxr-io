@@ -1,3 +1,11 @@
 node_modules/
 dist/
 *.tsbuildinfo
+
+# C++ build output (cpp/extern/ vendored deps ARE committed)
+cpp/build/
+build/
+
+# clangd / editor caches
+.cache/
+compile_commands.json

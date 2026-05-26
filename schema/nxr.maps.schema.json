@@ -1,0 +1,61 @@
+{
+  "$schema": "./nxr.meta.schema.json",
+  "$id": "https://nxr.dev/schema/nxr.maps.schema.json",
+  "kind": "nxr.maps",
+  "version": "1.0",
+  "title": "NXR Maps (on-disk)",
+  "description": "Operators relating SENSOR space (recordings) and SOURCE space (field on the manifold). `forward/` holds the leadfield (field/source -> sensors); `inverse/` holds the projection that maps sensors -> field (a vertex inverse, or the GBF sensor->eigenmode operator W). Both reference the manifold and recordings of the same subject store.",
+
+  "dims": {
+    "M": "number of sensor channels",
+    "V": "number of manifold vertices",
+    "nsrc": "number of source-space points",
+    "Ks": "number of scalar eigenmodes (GBF inverse)"
+  },
+
+  "attributes": {
+    "schema": { "type": "string", "const": "nxr.maps@1.0", "required": true }
+  },
+
+  "groups": {
+    "forward": {
+      "description": "Forward model: field/source -> predicted sensors.",
+      "attributes": {
+        "source_ori":       { "type": "int", "description": "0 = free orientation, 1 = fixed (surface-normal)." },
+        "n_sources":        { "type": "int", "description": "= nsrc." },
+        "spacing":          { "type": "string", "description": "Source-space spacing, e.g. 'ico5'." },
+        "montage":          { "type": "string" },
+        "bem_conductivity": { "type": "float[]", "description": "BEM layer conductivities." }
+      }
+    },
+    "inverse": {
+      "description": "Inverse / projection: sensors -> field. Vertex inverse ([nsrc,M]) or GBF eigenmode projection W ([Ks,M]).",
+      "attributes": {
+        "method":         { "type": "string", "description": "'MNE','dSPM','sLORETA','LCMV','GBF',..." },
+        "lambda2":        { "type": "float", "description": "Regularization (minimum-norm family)." },
+        "regularization": { "type": "float", "description": "GBF mu." },
+        "sigma_mode":     { "type": "string", "description": "GBF spectral penalty profile ('inv_log','power','log')." },
+        "K":              { "type": "int", "description": "Number of modes (GBF), = Ks." }
+      }
+    }
+  },
+
+  "arrays": {
+    "forward/leadfield": {
+      "dtype": "float64", "shape": ["M", "nsrc"],
+      "shape_variants": [["M", "nsrc"], ["M", "nsrc", 3], ["M", "V", 3]],
+      "storage": "row_major", "chunks": "auto",
+      "description": "Gain matrix. [M,nsrc] fixed-orientation; [M,nsrc,3] or [M,V,3] free-orientation."
+    },
+    "forward/source_rr": { "dtype": "float32", "shape": ["nsrc", 3], "storage": "row_major", "units": "m", "description": "Source positions." },
+    "forward/source_nn": { "dtype": "float32", "shape": ["nsrc", 3], "storage": "row_major", "description": "Source unit normals." },
+
+    "inverse/W": {
+      "dtype": "float64", "shape": ["Ks", "M"],
+      "shape_variants": [["Ks", "M"], ["nsrc", "M"], ["Ks", "M", 2]],
+      "storage": "row_major", "chunks": "auto",
+      "description": "Inverse operator. [Ks,M] GBF sensor->eigenmode (scalar); [nsrc,M] vertex inverse; [Ks,M,2] complex (vector GBF, trailing re/im)."
+    },
+    "inverse/whitener": { "dtype": "float64", "shape": ["M", "M"], "storage": "row_major", "description": "Noise whitener from recordings/noise_cov." }
+  }
+}

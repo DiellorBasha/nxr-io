@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nxr.dev/schema/nxr.meta.schema.json",
+  "title": "NXR on-disk kind meta-schema",
+  "description": "Validates an nxr-io on-disk 'kind' schema file — the machine-readable contract that the C++ and JS validators load to check a Zarr store. Run: ajv validate -s nxr.meta.schema.json -d nxr.manifold.schema.json (etc.). A kind schema describes, relative to its group root: required/optional group attributes, dense arrays, CSC sparse groups, and nested sub-groups. The subject root profile uses 'components' instead.",
+  "type": "object",
+
+  "$defs": {
+    "dtype": {
+      "description": "Element type. bool materializes as uint8; complex* implies complex_interleaved storage.",
+      "enum": ["float64", "float32", "int32", "int64", "uint8", "uint32", "complex64", "complex128", "bool"]
+    },
+    "storage": {
+      "enum": ["row_major", "col_major", "csc", "csr", "diagonal", "complex_interleaved", "scalar"]
+    },
+    "dim": {
+      "description": "A symbolic dimension token (e.g. V, F, E, K, M, T, nsrc, D) or a fixed integer.",
+      "type": ["string", "integer"]
+    },
+    "shape": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/dim" }
+    },
+    "attr_spec": {
+      "type": "object",
+      "properties": {
+        "type": { "enum": ["string", "int", "float", "bool", "int[]", "float[]", "string[]", "object"] },
+        "const": {},
+        "enum": { "type": "array" },
+        "required": { "type": "boolean", "default": false },
+        "description": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "array_spec": {
+      "type": "object",
+      "properties": {
+        "dtype": { "$ref": "#/$defs/dtype" },
+        "shape": { "$ref": "#/$defs/shape" },
+        "shape_variants": {
+          "description": "For polymorphic leaves (e.g. field/values), the allowed shapes selected by sibling attributes.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/shape" }
+        },
+        "storage": { "$ref": "#/$defs/storage" },
+        "chunks": {
+          "oneOf": [{ "$ref": "#/$defs/shape" }, { "enum": ["auto", "single"] }]
+        },
+        "required": { "type": "boolean", "default": false },
+        "units": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "required": ["dtype", "shape", "storage"],
+      "additionalProperties": false
+    },
+    "sparse_spec": {
+      "description": "A CSC sparse group: sub-arrays indptr[cols+1], indices[nnz], data[nnz]; attrs {format:'csc', shape:[rows,cols], nnz}.",
+      "type": "object",
+      "properties": {
+        "format": { "const": "csc" },
+        "shape": { "$ref": "#/$defs/shape" },
+        "data_dtype": { "$ref": "#/$defs/dtype" },
+        "index_dtype": { "enum": ["int32", "int64"], "default": "int32" },
+        "required": { "type": "boolean", "default": false },
+        "description": { "type": "string" }
+      },
+      "required": ["format", "shape", "data_dtype"],
+      "additionalProperties": false
+    },
+    "group_spec": {
+      "type": "object",
+      "properties": {
+        "required": { "type": "boolean", "default": false },
+        "description": { "type": "string" },
+        "attributes": { "type": "object", "additionalProperties": { "$ref": "#/$defs/attr_spec" } }
+      },
+      "additionalProperties": false
+    },
+    "component_spec": {
+      "description": "A top-level component of the subject store (root profile only).",
+      "type": "object",
+      "properties": {
+        "kind": { "type": "string", "pattern": "^[a-z][a-z0-9_.]*@[0-9]+\\.[0-9]+$" },
+        "required": { "type": "boolean", "default": false },
+        "description": { "type": "string" }
+      },
+      "required": ["kind"],
+      "additionalProperties": false
+    }
+  },
+
+  "properties": {
+    "$schema": { "type": "string" },
+    "$id": { "type": "string" },
+    "kind": { "type": "string", "pattern": "^[a-z][a-z0-9_.]*$" },
+    "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+$" },
+    "title": { "type": "string" },
+    "description": { "type": "string" },
+    "dims": {
+      "description": "Glossary of the symbolic dimension tokens used in this kind's shapes.",
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "attributes": { "type": "object", "additionalProperties": { "$ref": "#/$defs/attr_spec" } },
+    "groups": { "type": "object", "additionalProperties": { "$ref": "#/$defs/group_spec" } },
+    "arrays": { "type": "object", "additionalProperties": { "$ref": "#/$defs/array_spec" } },
+    "sparse": { "type": "object", "additionalProperties": { "$ref": "#/$defs/sparse_spec" } },
+    "components": { "type": "object", "additionalProperties": { "$ref": "#/$defs/component_spec" } }
+  },
+  "required": ["kind", "version", "attributes"],
+  "additionalProperties": false
+}

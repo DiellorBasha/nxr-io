@@ -1,0 +1,10 @@
+{
+  "description": "Maps each nxr schema `kind@version` to its on-disk kind-schema file. Loaded by both the C++ engine and the TS reader to resolve the schema referenced by a store's root `attributes.schema` (and by each component group's `schema` attribute). Add a new entry on every minor/major bump; never repurpose an existing one.",
+  "registry": {
+    "nxr.subject@1.0":    "nxr.subject.schema.json",
+    "nxr.manifold@1.0":   "nxr.manifold.schema.json",
+    "nxr.field@1.0":      "nxr.field.schema.json",
+    "nxr.recordings@1.0": "nxr.recordings.schema.json",
+    "nxr.maps@1.0":       "nxr.maps.schema.json"
+  }
+}

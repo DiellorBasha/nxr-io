@@ -1,0 +1,83 @@
+{
+  "$schema": "./nxr.meta.schema.json",
+  "$id": "https://nxr.dev/schema/nxr.manifold.schema.json",
+  "kind": "nxr.manifold",
+  "version": "1.0",
+  "title": "NXR Manifold (on-disk)",
+  "description": "Geometry + anatomy substrate: a triangulated 2-manifold in R^3 plus everything derivable from it (DEC operators, Laplacian, eigenmodes, curvature). On-disk realization of nxr-compute's manifold contract. Required inputs are mesh/vertices + mesh/faces; everything else is derived (by nxr-compute) and optional, filled in as it is computed. Dense data is C-order row-major; eigenvectors are vMajor ([V,K], U[v*K+k]); sparse operators are CSC; diagonal operators (hodge*, mass) store just the diagonal as a dense [N] array.",
+
+  "dims": {
+    "V": "number of vertices",
+    "F": "number of faces (triangles)",
+    "E": "number of undirected edges",
+    "Ks": "number of scalar (Laplace-Beltrami) eigenmodes",
+    "Kv": "number of vector (connection-Laplacian) eigenmodes"
+  },
+
+  "attributes": {
+    "schema":      { "type": "string", "const": "nxr.manifold@1.0", "required": true },
+    "nV":          { "type": "int", "required": true, "description": "Vertex count." },
+    "nF":          { "type": "int", "required": true, "description": "Face count." },
+    "nE":          { "type": "int", "description": "Edge count." },
+    "total_area":  { "type": "float", "description": "Sum of face areas (world units^2)." },
+    "fingerprint": { "type": "string", "description": "SHA-256 hex of canonicalized vertex+face bytes." },
+    "created_utc": { "type": "string" }
+  },
+
+  "groups": {
+    "eigenmodes/scalar": {
+      "description": "Laplace-Beltrami spectral basis (0-forms). M-orthonormalized; DC mode removed by default.",
+      "attributes": {
+        "K":          { "type": "int", "description": "Number of computed modes." },
+        "operator":   { "type": "string", "description": "Source operator, e.g. 'operators/stiffness'." },
+        "normalized": { "type": "bool" },
+        "dc_removed": { "type": "bool" }
+      }
+    },
+    "eigenmodes/vector": {
+      "description": "Connection-Laplacian spectral basis (complex tangent fields). Reserved for the vector-GBF roadmap.",
+      "attributes": { "K": { "type": "int" } }
+    }
+  },
+
+  "arrays": {
+    "mesh/vertices": {
+      "dtype": "float64", "shape": ["V", 3], "storage": "row_major", "required": true,
+      "chunks": "single", "units": "world units",
+      "description": "World-space vertex positions, row-major xyz. Required input."
+    },
+    "mesh/faces": {
+      "dtype": "int32", "shape": ["F", 3], "storage": "row_major", "required": true,
+      "chunks": "single",
+      "description": "Triangle vertex-index triples, 0-based. Required input."
+    },
+
+    "geometry/vertex_normals": { "dtype": "float64", "shape": ["V", 3], "storage": "row_major", "description": "Per-vertex unit normals." },
+    "geometry/face_normals":   { "dtype": "float64", "shape": ["F", 3], "storage": "row_major", "description": "Per-face unit normals." },
+    "geometry/face_areas":     { "dtype": "float64", "shape": ["F"],    "storage": "row_major", "units": "world units^2", "description": "Triangle areas." },
+    "geometry/vertex_areas":   { "dtype": "float64", "shape": ["V"],    "storage": "row_major", "units": "world units^2", "description": "Voronoi dual areas (= diag of mass)." },
+
+    "operators/mass":   { "dtype": "float64", "shape": ["V"], "storage": "diagonal", "description": "Lumped Voronoi mass (= hodge0). Diagonal stored as dense [V]." },
+    "operators/hodge0": { "dtype": "float64", "shape": ["V"], "storage": "diagonal", "description": "Hodge star on 0-forms (diagonal)." },
+    "operators/hodge1": { "dtype": "float64", "shape": ["E"], "storage": "diagonal", "description": "Hodge star on 1-forms (diagonal): cotangent weights / 2." },
+    "operators/hodge2": { "dtype": "float64", "shape": ["F"], "storage": "diagonal", "description": "Hodge star on 2-forms (diagonal): 1 / face_area." },
+
+    "curvature/gaussian":          { "dtype": "float64", "shape": ["V"],    "storage": "row_major", "units": "1 / world units^2", "description": "Discrete Gaussian curvature (angle defect)." },
+    "curvature/mean":              { "dtype": "float64", "shape": ["V"],    "storage": "row_major", "units": "1 / world units",   "description": "Discrete mean curvature." },
+    "curvature/principal_max":     { "dtype": "float64", "shape": ["V"],    "storage": "row_major", "description": "Larger principal curvature." },
+    "curvature/principal_min":     { "dtype": "float64", "shape": ["V"],    "storage": "row_major", "description": "Smaller principal curvature." },
+    "curvature/principal_dir_max": { "dtype": "float64", "shape": ["V", 3], "storage": "row_major", "description": "World-space direction of the larger principal curvature." },
+
+    "eigenmodes/scalar/eigenvalues":  { "dtype": "float64", "shape": ["Ks"],       "storage": "row_major", "description": "LB eigenvalues, ascending." },
+    "eigenmodes/scalar/eigenvectors": { "dtype": "float64", "shape": ["V", "Ks"],  "storage": "row_major", "chunks": ["V", 50], "description": "LB eigenvectors, vMajor (U[v*Ks+k]). float64 on disk; cast to float32 at GPU upload." },
+
+    "eigenmodes/vector/eigenvalues":  { "dtype": "float64", "shape": ["Kv"],            "storage": "row_major", "description": "Connection-Laplacian eigenvalues (real, non-negative)." },
+    "eigenmodes/vector/eigenvectors": { "dtype": "float32", "shape": ["V", "Kv", 2],    "storage": "complex_interleaved", "chunks": ["V", 50, 2], "description": "Complex tangent eigenfields, trailing [re, im]." }
+  },
+
+  "sparse": {
+    "operators/stiffness": { "format": "csc", "shape": ["V", "V"], "data_dtype": "float64", "description": "Cotangent Laplacian (PSD, symmetrized) = d0^T hodge1 d0." },
+    "operators/d0":        { "format": "csc", "shape": ["E", "V"], "data_dtype": "float64", "description": "Vertex 0-form -> edge 1-form gradient (signed incidence)." },
+    "operators/d1":        { "format": "csc", "shape": ["F", "E"], "data_dtype": "float64", "description": "Edge 1-form -> face 2-form curl (signed incidence)." }
+  }
+}

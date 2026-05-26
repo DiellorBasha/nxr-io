@@ -1,0 +1,23 @@
+{
+  "$schema": "./nxr.meta.schema.json",
+  "$id": "https://nxr.dev/schema/nxr.subject.schema.json",
+  "kind": "nxr.subject",
+  "version": "1.0",
+  "title": "NXR Subject Store",
+  "description": "Root profile of a stateful `<subject>.nxr.zarr` store. The store is one document that grows over the data lifecycle: import -> eigenmodes -> forward -> inverse -> analysis. It has up to four top-level component groups, each its own versioned kind. Only `manifold` is required to call a store well-formed; the rest are filled in as the pipeline progresses. Each component group also carries its own root `schema` attribute and is independently valid (and cross-referenceable) as a standalone store.",
+
+  "attributes": {
+    "schema":          { "type": "string", "const": "nxr.subject@1.0", "required": true, "description": "Constant. Verified on open." },
+    "subject":         { "type": "string", "required": true, "description": "Subject / dataset identifier." },
+    "created_utc":     { "type": "string", "description": "ISO-8601 creation timestamp." },
+    "modified_utc":    { "type": "string", "description": "ISO-8601 last-modified timestamp (updated by CRUD writes)." },
+    "nxr_io_version":  { "type": "string", "description": "nxr-io build that last wrote the store." }
+  },
+
+  "components": {
+    "manifold":   { "kind": "nxr.manifold@1.0",   "required": true,  "description": "Geometry + anatomy substrate." },
+    "field":      { "kind": "nxr.field@1.0",       "required": false, "description": "Signals defined on the manifold (source space). May hold multiple named field sub-groups." },
+    "recordings": { "kind": "nxr.recordings@1.0",  "required": false, "description": "MEG/EEG sensor data (sensor space)." },
+    "maps":       { "kind": "nxr.maps@1.0",        "required": false, "description": "Forward + inverse operators relating recordings <-> field." }
+  }
+}

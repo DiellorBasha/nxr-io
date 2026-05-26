@@ -1,0 +1,43 @@
+{
+  "$schema": "./nxr.meta.schema.json",
+  "$id": "https://nxr.dev/schema/nxr.recordings.schema.json",
+  "kind": "nxr.recordings",
+  "version": "1.0",
+  "title": "NXR Recordings (on-disk)",
+  "description": "Original MEG/EEG SENSOR-space data. `data` is the raw channel x time matrix; sensor metadata (names, types, positions) lives in attributes; `events` and `noise_cov` are optional. This is the input to the forward/inverse `maps`. v1 models one recording per group; multiple runs are a later minor version (runs/<run_id>/).",
+
+  "dims": {
+    "M": "number of sensor channels",
+    "T": "number of time samples",
+    "N": "number of events"
+  },
+
+  "attributes": {
+    "schema":      { "type": "string", "const": "nxr.recordings@1.0", "required": true },
+    "modality":    { "type": "string", "enum": ["meg", "eeg", "meeg"], "required": true },
+    "sfreq":       { "type": "float", "required": true, "description": "Sampling rate, Hz." },
+    "n_channels":  { "type": "int", "description": "= M." },
+    "tmin":        { "type": "float", "description": "First-sample time, seconds." },
+    "ch_names":    { "type": "string[]", "description": "Channel names, length M." },
+    "ch_types":    { "type": "string[]", "description": "Per-channel type tags (e.g. 'mag','grad','eeg'), length M." },
+    "montage":     { "type": "string", "description": "Sensor montage / cap, e.g. 'biosemi128'." },
+    "units":       { "type": "string", "description": "Physical units of data (e.g. 'T','T/m','V')." },
+    "line_freq":   { "type": "float", "description": "Power-line frequency, Hz (50/60)." }
+  },
+
+  "arrays": {
+    "data": {
+      "dtype": "float32", "shape": ["M", "T"], "storage": "row_major", "required": true,
+      "chunks": ["M", 4000],
+      "description": "Raw sensor signal, channel-major [M,T]. Time-windowed chunking (~few seconds per chunk) for streaming."
+    },
+    "events": {
+      "dtype": "int32", "shape": ["N", 3], "storage": "row_major",
+      "description": "Event matrix (MNE convention): [sample, prev_id, event_id]."
+    },
+    "noise_cov": {
+      "dtype": "float64", "shape": ["M", "M"], "storage": "row_major",
+      "description": "Sensor-space noise covariance (used to build the whitener)."
+    }
+  }
+}

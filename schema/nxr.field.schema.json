@@ -1,0 +1,42 @@
+{
+  "$schema": "./nxr.meta.schema.json",
+  "$id": "https://nxr.dev/schema/nxr.field.schema.json",
+  "kind": "nxr.field",
+  "version": "1.0",
+  "title": "NXR Field (on-disk)",
+  "description": "A single signal defined ON a manifold. The subject store's `field/` group holds one or more named field instances (e.g. field/activation, field/curvature), each conforming to this kind. A field is identified by {kind: scalar|vector, domain: vertex|edge|face} and may be time-varying and/or complex. This is the unifier for source-time-courses, eigenmode-coefficient reconstructions, flow/Helmholtz outputs, and derived scalar maps. The in-memory compute operations in nxr-compute's field.schema.json (gradient, divergence, isolines, streamlines, hodge, poisson) are NOT persisted here — only attributes + values.",
+
+  "dims": {
+    "D": "domain element count = V (vertex) | E (edge) | F (face), per attributes.domain",
+    "T": "number of time frames (time-varying fields only)"
+  },
+
+  "attributes": {
+    "schema":       { "type": "string", "const": "nxr.field@1.0", "required": true },
+    "manifold_ref": { "type": "string", "required": true, "description": "Reference to the host manifold: '<schema>:<id>' or a path like './manifold'." },
+    "kind":         { "type": "string", "enum": ["scalar", "vector"], "required": true },
+    "domain":       { "type": "string", "enum": ["vertex", "edge", "face"], "required": true },
+    "time_varying": { "type": "bool", "description": "If true, values gains a leading T (frame) axis." },
+    "complex":      { "type": "bool", "description": "If true, values gains a trailing [re, im] axis (storage complex_interleaved)." },
+    "T":            { "type": "int", "description": "Frame count when time_varying." },
+    "tmin":         { "type": "float", "description": "First-frame time, seconds (time_varying)." },
+    "tstep":        { "type": "float", "description": "Frame step, seconds (= 1/sfreq)." },
+    "sfreq":        { "type": "float", "description": "Sampling rate, Hz (time_varying)." },
+    "units":        { "type": "string", "description": "Physical units of values (e.g. 'Am', 'dSPM', 'm/s')." },
+    "source":       { "type": "string", "enum": ["measurement", "simulation", "generator", "derived"] },
+    "method":       { "type": "string", "description": "Producing method, when derived (e.g. 'MNE','dSPM','GBF')." },
+    "range_hint":   { "type": "float[]", "description": "Suggested colormap domain [lo, hi]." }
+  },
+
+  "arrays": {
+    "values": {
+      "dtype": "float64",
+      "shape": ["D"],
+      "shape_variants": [["D"], ["D", 3], ["T", "D"], ["T", "D", 3]],
+      "storage": "row_major",
+      "required": true,
+      "units": "field-specific",
+      "description": "Field buffer. Rank/dtype selected by sibling attributes: scalar->[D], vector->[D,3]; time_varying prepends T (frame-major [T,D]/[T,D,3]). STATIC fields are float64; TIME-VARYING fields are float32 frame-major (per-frame upload contiguous). COMPLEX fields append a trailing 2 ([...,2]) with storage complex_interleaved. (Legacy nxr.stc@1.0 used [V,T] vertex-major float32 — migrate to frame-major [T,V].)"
+    }
+  }
+}
