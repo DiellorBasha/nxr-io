@@ -1,5 +1,5 @@
 node_modules/
-dist/
+/dist/
 *.tsbuildinfo
 
 # C++ build output (cpp/extern/ vendored deps ARE committed)

@@ -23,7 +23,7 @@ export type {
   ReadOptions,
   WriteOptions,
   ArrayMeta,
-  SparseCOO,
+  SparseCSC,
   Attrs,
 } from './types.js';
 
@@ -45,3 +45,7 @@ export { group } from './group.js';
 
 // Sparse
 export { sparse } from './sparse.js';
+
+// Schema validation
+export { validateStore, readSchemaTag } from './schema.js';
+export type { SchemaIssue, KindSchema, Registry } from './schema.js';

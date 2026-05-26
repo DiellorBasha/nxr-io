@@ -29,23 +29,29 @@ add_library(nxr_io
   src/chunking.cpp
   src/zarr_store.cpp
   src/sparse.cpp
+  src/schema.cpp
 )
 target_include_directories(nxr_io
   PUBLIC  ${CMAKE_CURRENT_SOURCE_DIR}/include
   PRIVATE ${ZSTD_INCLUDE_DIR})
 target_link_libraries(nxr_io PUBLIC nlohmann_json PRIVATE ${ZSTD_LIBRARY})
 
+# Cross-language fixture generator (read back by zarrita in test/crosslang.node.ts).
+add_executable(nxr_io_gen test/gen_crosslang.cpp)
+target_link_libraries(nxr_io_gen PRIVATE nxr_io)
+
 # --- tests (hand-written + ctest) ---
 option(NXR_IO_BUILD_TESTS "Build nxr-io C++ tests" ON)
 if(NXR_IO_BUILD_TESTS)
   enable_testing()
-  set(NXR_IO_TESTS codec dtype array_io groups read_existing crud sparse)
+  set(NXR_IO_TESTS codec dtype array_io groups read_existing crud sparse schema)
   foreach(t ${NXR_IO_TESTS})
     add_executable(test_${t} test/test_${t}.cpp)
     target_link_libraries(test_${t} PRIVATE nxr_io)
     target_include_directories(test_${t} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/test)
     target_compile_definitions(test_${t} PRIVATE
-      NXR_IO_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../test/data")
+      NXR_IO_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../test/data"
+      NXR_IO_SCHEMA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../schema")
     add_test(NAME test_${t} COMMAND test_${t})
   endforeach()
 

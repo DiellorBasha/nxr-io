@@ -12,12 +12,18 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "schema"
   ],
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
     "test": "tsx test/read.node.ts",
+    "test:schema": "tsx test/schema.node.ts",
+    "test:crosslang": "tsx test/crosslang.node.ts",
+    "build:wasm": "bash scripts/build-wasm.sh",
+    "test:wasm": "node test/wasm.smoke.mjs",
+    "validate:schemas": "node scripts/validate-schemas.mjs",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run build"
   },
@@ -25,6 +31,7 @@
     "zarrita": "^0.5.4"
   },
   "devDependencies": {
+    "ajv": "^8.17.1",
     "tsx": "^4.21.0",
     "typescript": "^5.5.0",
     "zarrita": "^0.5.4"

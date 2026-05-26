@@ -61,10 +61,13 @@ export interface ArrayMeta {
 
 // ─── Sparse ─────────────────────────────────────────────────────────────────
 
-/** Sparse matrix in COO format */
-export interface SparseCOO {
-  row: Uint32Array;
-  col: Uint32Array;
+/** Sparse matrix in CSC format (matches Eigen/geometry-central + scipy csc_matrix). */
+export interface SparseCSC {
+  /** Column pointers, length cols+1. */
+  indptr: Int32Array;
+  /** Row indices, length nnz. */
+  indices: Int32Array;
+  /** Values, length nnz. */
   data: Float32Array | Float64Array;
   shape: [number, number];
   nnz: number;
