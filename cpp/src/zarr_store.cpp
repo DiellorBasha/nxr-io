@@ -113,6 +113,45 @@ nlohmann::json ZarrStore::read_attributes(const std::string& path) const {
   return read_json(j).value("attributes", nlohmann::json::object());
 }
 
+std::vector<std::string> ZarrStore::list(const std::string& path) const {
+  std::vector<std::string> out;
+  const fs::path dir = resolve(path);
+  if (!fs::is_directory(dir)) return out;
+  for (const auto& entry : fs::directory_iterator(dir)) {
+    if (entry.is_directory() && fs::exists(entry.path() / "zarr.json")) {
+      out.push_back(entry.path().filename().string());
+    }
+  }
+  std::sort(out.begin(), out.end());
+  return out;
+}
+
+void ZarrStore::update_attributes(const std::string& path, const nlohmann::json& patch) {
+  const fs::path j = resolve(path) / "zarr.json";
+  if (!fs::exists(j)) throw ZarrIOError("[nxr/io] no node at \"" + path + "\"");
+  nlohmann::json meta = read_json(j);
+  nlohmann::json attrs = meta.value("attributes", nlohmann::json::object());
+  attrs.update(patch);  // shallow merge: keys overwrite or add
+  meta["attributes"] = attrs;
+  write_text(j, meta.dump());
+}
+
+void ZarrStore::delete_attribute(const std::string& path, const std::string& key) {
+  const fs::path j = resolve(path) / "zarr.json";
+  if (!fs::exists(j)) throw ZarrIOError("[nxr/io] no node at \"" + path + "\"");
+  nlohmann::json meta = read_json(j);
+  if (meta.contains("attributes")) meta["attributes"].erase(key);
+  write_text(j, meta.dump());
+}
+
+void ZarrStore::delete_node(const std::string& path) {
+  const fs::path dir = resolve(path);
+  if (fs::weakly_canonical(dir) == fs::weakly_canonical(root_)) {
+    throw ZarrIOError("[nxr/io] refusing to delete the store root");
+  }
+  fs::remove_all(dir);
+}
+
 ArrayMetadata ZarrStore::read_metadata(const std::string& path) const {
   const fs::path mj = resolve(path) / "zarr.json";
   if (!fs::exists(mj)) throw ZarrIOError("[nxr/io] no node at \"" + path + "\"");
@@ -135,6 +174,7 @@ void ZarrStore::write_raw(const std::string& path, const std::uint8_t* data, DTy
 
   const fs::path dir = resolve(path);
   fs::create_directories(dir);
+  fs::remove_all(dir / "c");  // clear any stale chunks from a previous write
   write_text(dir / "zarr.json",
              detail::make_array_json(dtype, shape, chunks, opts.fill_value, opts.compress,
                                      opts.zstd_level, opts.attributes)

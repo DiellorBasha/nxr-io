@@ -11,6 +11,7 @@
 #include "nxr/io/errors.h"
 #include "nxr/io/array_metadata.h"
 #include "nxr/io/write_options.h"
+#include "nxr/io/sparse.h"
 
 namespace nxr::io {
 
@@ -29,6 +30,21 @@ class ZarrStore {
   bool is_group(const std::string& path) const;
   bool is_array(const std::string& path) const;
   nlohmann::json read_attributes(const std::string& path) const;
+
+  // List immediate child node names (groups + arrays) of a group, sorted.
+  std::vector<std::string> list(const std::string& path) const;
+  // Merge `patch` into a node's attributes (shallow: keys overwrite or add).
+  void update_attributes(const std::string& path, const nlohmann::json& patch);
+  // Remove a single attribute key from a node (no-op if absent).
+  void delete_attribute(const std::string& path, const std::string& key);
+  // Recursively delete a group or array node. Refuses to delete the store root.
+  void delete_node(const std::string& path);
+
+  // --- sparse (CSC) ---
+  // Write a CSC matrix as a group {format:"csc", shape, nnz} + indptr/indices/data.
+  void write_sparse(const std::string& path, const CscMatrix& m, const WriteOptions& opts = {});
+  // Read a CSC sparse group back. Throws if the group is not CSC.
+  CscMatrix read_sparse(const std::string& path) const;
 
   // --- arrays ---
   ArrayMetadata read_metadata(const std::string& path) const;

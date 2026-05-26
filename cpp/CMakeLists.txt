@@ -28,6 +28,7 @@ add_library(nxr_io
   src/metadata.cpp
   src/chunking.cpp
   src/zarr_store.cpp
+  src/sparse.cpp
 )
 target_include_directories(nxr_io
   PUBLIC  ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -38,7 +39,7 @@ target_link_libraries(nxr_io PUBLIC nlohmann_json PRIVATE ${ZSTD_LIBRARY})
 option(NXR_IO_BUILD_TESTS "Build nxr-io C++ tests" ON)
 if(NXR_IO_BUILD_TESTS)
   enable_testing()
-  set(NXR_IO_TESTS codec dtype array_io groups read_existing)
+  set(NXR_IO_TESTS codec dtype array_io groups read_existing crud sparse)
   foreach(t ${NXR_IO_TESTS})
     add_executable(test_${t} test/test_${t}.cpp)
     target_link_libraries(test_${t} PRIVATE nxr_io)
@@ -47,4 +48,21 @@ if(NXR_IO_BUILD_TESTS)
       NXR_IO_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../test/data")
     add_test(NAME test_${t} COMMAND test_${t})
   endforeach()
+
+  # Optional Eigen interop (header-only). The core library never needs Eigen.
+  option(NXR_IO_WITH_EIGEN "Build the optional Eigen interop test" OFF)
+  if(NXR_IO_WITH_EIGEN)
+    find_path(EIGEN3_INCLUDE_DIR Eigen/Dense
+      HINTS /opt/homebrew/include/eigen3 /usr/local/include/eigen3 /usr/include/eigen3)
+    if(NOT EIGEN3_INCLUDE_DIR)
+      message(FATAL_ERROR "NXR_IO_WITH_EIGEN=ON but Eigen headers not found")
+    endif()
+    add_executable(test_eigen test/test_eigen.cpp)
+    target_link_libraries(test_eigen PRIVATE nxr_io)
+    target_include_directories(test_eigen PRIVATE
+      ${CMAKE_CURRENT_SOURCE_DIR}/test ${EIGEN3_INCLUDE_DIR})
+    target_compile_definitions(test_eigen PRIVATE
+      NXR_IO_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../test/data")
+    add_test(NAME test_eigen COMMAND test_eigen)
+  endif()
 endif()
