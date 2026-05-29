@@ -22,6 +22,7 @@ FetchContent_MakeAvailable(zstd)
 
 add_executable(nxr_io
   ${CORE}/src/codec_zstd.cpp
+  ${CORE}/src/codec_pipeline.cpp
   ${CORE}/src/dtype.cpp
   ${CORE}/src/metadata.cpp
   ${CORE}/src/chunking.cpp
