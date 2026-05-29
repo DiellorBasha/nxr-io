@@ -5,7 +5,6 @@
 #include <filesystem>
 #include <fstream>
 
-#include "nxr/io/codec.h"
 #include "nxr/io/codec_pipeline.h"
 #include "chunking.h"
 #include "metadata.h"
