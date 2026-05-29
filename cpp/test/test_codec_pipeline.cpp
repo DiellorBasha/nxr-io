@@ -46,5 +46,37 @@ int main() {
   const std::vector<std::uint8_t> decb = bpipe.decode(encb.data(), encb.size(), raw.size());
   CHECK(decb == raw);
 
+  // Parse a real [bytes, zstd] codecs array.
+  const nlohmann::json codecs_arr = nlohmann::json::array({
+      {{"name", "bytes"}, {"configuration", {{"endian", "little"}}}},
+      {{"name", "zstd"}, {"configuration", {{"level", 3}, {"checksum", false}}}},
+  });
+  const CodecPipeline parsed = CodecPipeline::from_json(codecs_arr);
+  CHECK_EQ(parsed.specs().size(), static_cast<std::size_t>(2));
+  CHECK_EQ(parsed.specs()[1].name, std::string("zstd"));
+
+  // An unsupported codec (e.g. blosc) must throw, not silently mis-decode.
+  bool threw = false;
+  try {
+    CodecPipeline::from_json(nlohmann::json::array({
+        {{"name", "bytes"}, {"configuration", {{"endian", "little"}}}},
+        {{"name", "blosc"}, {"configuration", nlohmann::json::object()}},
+    }));
+  } catch (const std::exception&) {
+    threw = true;
+  }
+  CHECK(threw);
+
+  // A pipeline that does not start with `bytes` must throw.
+  bool threw2 = false;
+  try {
+    CodecPipeline::from_json(nlohmann::json::array({
+        {{"name", "zstd"}, {"configuration", nlohmann::json::object()}},
+    }));
+  } catch (const std::exception&) {
+    threw2 = true;
+  }
+  CHECK(threw2);
+
   return nxrtest::finish("codec_pipeline");
 }
