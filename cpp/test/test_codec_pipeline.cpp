@@ -29,5 +29,22 @@ int main() {
   CHECK(bp.encode(nullptr, 0).empty());
   CHECK(bp.decode(nullptr, 0, 0).empty());
 
+  // Round-trip a compressible buffer through the compressed pipeline.
+  std::vector<std::uint8_t> raw(8000);
+  for (std::size_t i = 0; i < raw.size(); ++i) raw[i] = static_cast<std::uint8_t>(i % 7);
+
+  const CodecPipeline zpipe = CodecPipeline::canonical(/*compress=*/true, 0);
+  const std::vector<std::uint8_t> enc = zpipe.encode(raw.data(), raw.size());
+  CHECK(enc.size() < raw.size());  // patterned data must compress
+  const std::vector<std::uint8_t> dec = zpipe.decode(enc.data(), enc.size(), raw.size());
+  CHECK(dec == raw);
+
+  // The uncompressed pipeline is a pass-through.
+  const CodecPipeline bpipe = CodecPipeline::canonical(/*compress=*/false, 0);
+  const std::vector<std::uint8_t> encb = bpipe.encode(raw.data(), raw.size());
+  CHECK(encb == raw);
+  const std::vector<std::uint8_t> decb = bpipe.decode(encb.data(), encb.size(), raw.size());
+  CHECK(decb == raw);
+
   return nxrtest::finish("codec_pipeline");
 }
