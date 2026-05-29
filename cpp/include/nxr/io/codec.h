@@ -1,9 +1,6 @@
-// nxr-io — zstd codec (Zarr v3 `zstd` codec body).
-//
-// The canonical codec pipeline is [bytes(little-endian), zstd{level:0}]. On
-// little-endian hosts the bytes codec is a no-op, so these functions handle the
-// zstd stage only. The array reader also supports the uncompressed (bytes-only)
-// case by skipping decompression.
+// nxr-io — zstd codec (Zarr v3 `zstd` codec body). These are the raw compress/
+// decompress primitives; codec chaining and the `bytes` (endian) stage live in
+// CodecPipeline (codec_pipeline.h), which calls these for any `zstd` stage.
 #pragma once
 #include <cstddef>
 #include <cstdint>

@@ -78,5 +78,15 @@ int main() {
   }
   CHECK(threw2);
 
+  // from_json of a lone [bytes] codec yields an uncompressed (identity) pipeline.
+  const CodecPipeline only_bytes = CodecPipeline::from_json(nlohmann::json::array({
+      {{"name", "bytes"}, {"configuration", {{"endian", "little"}}}},
+  }));
+  CHECK_EQ(only_bytes.specs().size(), static_cast<std::size_t>(1));
+  std::vector<std::uint8_t> payload = {1, 2, 3, 4, 5};
+  const std::vector<std::uint8_t> ident = only_bytes.encode(payload.data(), payload.size());
+  CHECK(ident == payload);  // bytes-only pipeline is identity on encode
+  CHECK(only_bytes.decode(ident.data(), ident.size(), payload.size()) == payload);
+
   return nxrtest::finish("codec_pipeline");
 }

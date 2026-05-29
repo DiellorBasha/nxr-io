@@ -55,6 +55,8 @@ std::vector<std::uint8_t> CodecPipeline::encode(const std::uint8_t* data,
                                                 std::size_t nbytes) const {
   if (nbytes == 0) return {};
   std::vector<std::uint8_t> buf(data, data + nbytes);  // `bytes` codec: identity on LE
+  // Only `zstd` is supported as a bytes->bytes codec (enforced by validate()).
+  // Adding another compressor (gzip/blosc) requires dispatching on specs_[i].name here.
   for (std::size_t i = 1; i < specs_.size(); ++i) {
     const int level = specs_[i].configuration.value("level", 0);
     buf = zstd_compress(buf.data(), buf.size(), level);
@@ -66,6 +68,8 @@ std::vector<std::uint8_t> CodecPipeline::decode(const std::uint8_t* data, std::s
                                                 std::size_t raw_size) const {
   if (nbytes == 0) return {};
   std::vector<std::uint8_t> buf(data, data + nbytes);
+  // Mirror of encode(): only `zstd` is handled (enforced by validate()). A future
+  // multi-compressor chain must dispatch on specs_[i].name in this loop too.
   for (std::size_t k = specs_.size(); k > 1; --k) {
     const std::size_t i = k - 1;          // bytes->bytes codec index
     const std::size_t expected = (i == 1) ? raw_size : 0;  // i==1 yields raw bytes; 0 => read size from frame header
