@@ -2,6 +2,8 @@
 
 #include <cstring>
 
+#include "nxr/io/codec_pipeline.h"
+
 namespace nxr::io::detail {
 
 using nlohmann::json;
@@ -21,12 +23,6 @@ nlohmann::json make_array_json(DType dtype, const std::vector<std::int64_t>& sha
                                const std::vector<std::int64_t>& chunks, double fill_value,
                                bool compress, int zstd_level,
                                const nlohmann::json& attributes) {
-  json codecs = json::array();
-  codecs.push_back({{"name", "bytes"}, {"configuration", {{"endian", "little"}}}});
-  if (compress) {
-    codecs.push_back(
-        {{"name", "zstd"}, {"configuration", {{"level", zstd_level}, {"checksum", false}}}});
-  }
   return json{
       {"zarr_format", 3},
       {"node_type", "array"},
@@ -35,7 +31,7 @@ nlohmann::json make_array_json(DType dtype, const std::vector<std::int64_t>& sha
       {"chunk_grid", {{"name", "regular"}, {"configuration", {{"chunk_shape", chunks}}}}},
       {"chunk_key_encoding", {{"name", "default"}, {"configuration", {{"separator", "/"}}}}},
       {"fill_value", fill_value_json(dtype, fill_value)},
-      {"codecs", codecs},
+      {"codecs", CodecPipeline::canonical(compress, zstd_level).to_json()},
       {"attributes", attributes.is_null() ? json::object() : attributes},
   };
 }
@@ -56,14 +52,10 @@ ArrayMetadata parse_array_json(const nlohmann::json& j) {
   if (j.contains("fill_value") && !j.at("fill_value").is_null()) {
     m.fill_value = j.at("fill_value").get<double>();
   }
-  m.compressed = false;
   if (j.contains("codecs")) {
-    for (const auto& c : j.at("codecs")) {
-      const std::string name = c.value("name", "");
-      if (name == "zstd" || name == "blosc" || name == "gzip" || name == "zlib") {
-        m.compressed = true;  // a bytes->bytes compressor is present
-      }
-    }
+    m.codecs = CodecPipeline::from_json(j.at("codecs")).specs();
+  } else {
+    m.codecs = CodecPipeline::canonical(/*compress=*/false, 0).specs();  // lenient default
   }
   m.attributes = j.value("attributes", json::object());
   return m;

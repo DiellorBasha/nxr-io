@@ -30,7 +30,9 @@ int main() {
   CHECK(meta.shape == std::vector<std::int64_t>({128, 20484}));
   CHECK(meta.chunks == std::vector<std::int64_t>({16, 5121}));
   CHECK_EQ(dtype_size(meta.dtype), static_cast<std::size_t>(8));
-  CHECK(meta.compressed);
+  bool has_zstd = false;
+  for (const auto& cs : meta.codecs) { if (cs.name == "zstd") has_zstd = true; }
+  CHECK(has_zstd);
 
   auto sol = store.read_array<double>("forward_eeg/sol");
   CHECK_EQ(sol.size(), static_cast<std::size_t>(128) * 20484);
