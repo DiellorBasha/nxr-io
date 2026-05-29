@@ -21,5 +21,13 @@ int main() {
   CHECK_EQ(j0.size(), static_cast<std::size_t>(1));
   CHECK_EQ(j0.at(0).at("name").get<std::string>(), std::string("bytes"));
 
+  // Empty input encodes/decodes to empty for both pipelines.
+  const CodecPipeline zp = CodecPipeline::canonical(/*compress=*/true, 0);
+  CHECK(zp.encode(nullptr, 0).empty());
+  CHECK(zp.decode(nullptr, 0, 0).empty());
+  const CodecPipeline bp = CodecPipeline::canonical(/*compress=*/false, 0);
+  CHECK(bp.encode(nullptr, 0).empty());
+  CHECK(bp.decode(nullptr, 0, 0).empty());
+
   return nxrtest::finish("codec_pipeline");
 }

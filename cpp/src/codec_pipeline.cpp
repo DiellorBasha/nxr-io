@@ -38,7 +38,10 @@ CodecPipeline CodecPipeline::from_json(const nlohmann::json& codecs) {
 }
 
 void CodecPipeline::validate() const {
-  if (specs_.empty() || specs_.front().name != "bytes") {
+  if (specs_.empty()) {
+    throw ZarrFormatError("[nxr/io] codec pipeline is empty");
+  }
+  if (specs_.front().name != "bytes") {
     throw ZarrFormatError("[nxr/io] codec pipeline must begin with the `bytes` codec");
   }
   for (std::size_t i = 1; i < specs_.size(); ++i) {
@@ -50,6 +53,7 @@ void CodecPipeline::validate() const {
 
 std::vector<std::uint8_t> CodecPipeline::encode(const std::uint8_t* data,
                                                 std::size_t nbytes) const {
+  if (nbytes == 0) return {};
   std::vector<std::uint8_t> buf(data, data + nbytes);  // `bytes` codec: identity on LE
   for (std::size_t i = 1; i < specs_.size(); ++i) {
     const int level = specs_[i].configuration.value("level", 0);
@@ -60,10 +64,11 @@ std::vector<std::uint8_t> CodecPipeline::encode(const std::uint8_t* data,
 
 std::vector<std::uint8_t> CodecPipeline::decode(const std::uint8_t* data, std::size_t nbytes,
                                                 std::size_t raw_size) const {
+  if (nbytes == 0) return {};
   std::vector<std::uint8_t> buf(data, data + nbytes);
   for (std::size_t k = specs_.size(); k > 1; --k) {
     const std::size_t i = k - 1;          // bytes->bytes codec index
-    const std::size_t expected = (i == 1) ? raw_size : 0;  // i==1 yields raw bytes
+    const std::size_t expected = (i == 1) ? raw_size : 0;  // i==1 yields raw bytes; 0 => read size from frame header
     buf = zstd_decompress(buf.data(), buf.size(), expected);
   }
   return buf;  // `bytes` codec (index 0): identity on LE
