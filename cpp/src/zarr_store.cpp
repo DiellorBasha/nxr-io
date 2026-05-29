@@ -5,7 +5,7 @@
 #include <filesystem>
 #include <fstream>
 
-#include "nxr/io/codec.h"
+#include "nxr/io/codec_pipeline.h"
 #include "chunking.h"
 #include "metadata.h"
 
@@ -187,6 +187,8 @@ void ZarrStore::write_raw(const std::string& path, const std::uint8_t* data, DTy
   const std::vector<std::uint8_t> fillp = detail::fill_pattern(dtype, opts.fill_value);
   const bool nonzero_fill = std::any_of(fillp.begin(), fillp.end(), [](std::uint8_t b) { return b != 0; });
 
+  const CodecPipeline pipe = CodecPipeline::canonical(opts.compress, opts.zstd_level);
+
   std::vector<std::int64_t> g(shape.size(), 0);
   for (std::int64_t c = 0; c < ngrid; ++c) {
     std::vector<std::uint8_t> chunkbuf(static_cast<std::size_t>(chunk_elems) * itemsize, 0);
@@ -198,9 +200,7 @@ void ZarrStore::write_raw(const std::string& path, const std::uint8_t* data, DTy
     detail::copy_chunk_region(shape, chunks, g, itemsize,
                               const_cast<std::uint8_t*>(data), chunkbuf.data(),
                               /*array_to_chunk=*/true);
-    std::vector<std::uint8_t> enc =
-        opts.compress ? zstd_compress(chunkbuf.data(), chunkbuf.size(), opts.zstd_level)
-                      : std::move(chunkbuf);
+    std::vector<std::uint8_t> enc = pipe.encode(chunkbuf.data(), chunkbuf.size());
     const fs::path cf = chunk_path(dir, g);
     fs::create_directories(cf.parent_path());
     write_bytes(cf, enc);
@@ -227,16 +227,16 @@ std::vector<std::uint8_t> ZarrStore::read_raw(const std::string& path,
   const std::vector<std::int64_t> grid = detail::chunk_grid(out_meta.shape, out_meta.chunks);
   const std::int64_t ngrid = detail::product(grid);
 
+  const CodecPipeline pipe(out_meta.codecs);
+
   std::vector<std::int64_t> g(out_meta.shape.size(), 0);
   for (std::int64_t c = 0; c < ngrid; ++c) {
     const fs::path cf = chunk_path(dir, g);
     if (fs::exists(cf)) {
       std::vector<std::uint8_t> enc = read_bytes(cf);
-      std::vector<std::uint8_t> dec =
-          out_meta.compressed
-              ? zstd_decompress(enc.data(), enc.size(), static_cast<std::size_t>(chunk_elems) * itemsize)
-              : std::move(enc);
-      if (dec.size() != static_cast<std::size_t>(chunk_elems) * itemsize) {
+      const std::size_t raw_size = static_cast<std::size_t>(chunk_elems) * itemsize;
+      std::vector<std::uint8_t> dec = pipe.decode(enc.data(), enc.size(), raw_size);
+      if (dec.size() != raw_size) {
         throw ZarrFormatError("[nxr/io] decoded chunk size mismatch at \"" + path + "\"");
       }
       detail::copy_chunk_region(out_meta.shape, out_meta.chunks, g, itemsize,

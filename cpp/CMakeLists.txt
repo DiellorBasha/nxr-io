@@ -24,6 +24,7 @@ target_include_directories(nlohmann_json INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/e
 # --- core library (sources added as TDD adds them) ---
 add_library(nxr_io
   src/codec_zstd.cpp
+  src/codec_pipeline.cpp
   src/dtype.cpp
   src/metadata.cpp
   src/chunking.cpp
@@ -44,7 +45,7 @@ target_link_libraries(nxr_io_gen PRIVATE nxr_io)
 option(NXR_IO_BUILD_TESTS "Build nxr-io C++ tests" ON)
 if(NXR_IO_BUILD_TESTS)
   enable_testing()
-  set(NXR_IO_TESTS codec dtype array_io groups read_existing crud sparse schema)
+  set(NXR_IO_TESTS codec codec_pipeline dtype array_io groups read_existing crud sparse schema)
   foreach(t ${NXR_IO_TESTS})
     add_executable(test_${t} test/test_${t}.cpp)
     target_link_libraries(test_${t} PRIVATE nxr_io)
