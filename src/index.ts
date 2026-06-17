@@ -29,7 +29,7 @@ export type {
 
 // Store
 export type { Store, ReadStore, WriteStore } from './store.js';
-export { open, create } from './store.js';
+export { open, create, openLocal, createLocal } from './store.js';
 
 // Read
 export { read, meta } from './read.js';

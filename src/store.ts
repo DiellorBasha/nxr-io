@@ -6,6 +6,7 @@
 
 import { FetchStore } from 'zarrita';
 import type { Readable, Mutable } from '@zarrita/storage';
+import { FileSystemStore } from '@zarrita/storage';
 import { Location, root } from 'zarrita';
 import type { OpenOptions } from './types.js';
 
@@ -70,4 +71,25 @@ export async function open(url: string, opts?: OpenOptions): Promise<ReadStore> 
 export function create<S extends Mutable>(backend: S, url: string): Store<S> {
   const location = root(backend);
   return { location, url, mode: 'w' };
+}
+
+// ─── Local Filesystem (Node only) ───────────────────────────────────────────
+
+/**
+ * Open a Zarr store on the local filesystem (Node only). Read + write.
+ *
+ * @param path - Absolute or relative path to the .zarr root directory
+ */
+export async function openLocal(path: string, opts?: OpenOptions): Promise<Store<FileSystemStore>> {
+  const backend = new FileSystemStore(path);
+  const location = root(backend);
+  return { location, url: path, mode: opts?.mode ?? 'rw' };
+}
+
+/**
+ * Create a writable Zarr store on the local filesystem (Node only).
+ */
+export function createLocal(path: string): Store<FileSystemStore> {
+  const backend = new FileSystemStore(path);
+  return { location: root(backend), url: path, mode: 'w' };
 }
