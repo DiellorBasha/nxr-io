@@ -55,21 +55,15 @@ async function readArray<T extends Attrs = Attrs>(store: Store, path: string): P
 async function write(store: Store<Mutable>, path: string, data: Attrs): Promise<void> {
   const loc = path ? store.location.resolve(path) : store.location;
   const zarrJsonPath = loc.resolve('zarr.json').path;
-
-  try {
-    // Try reading the existing zarr.json metadata
-    const existingBytes = await (store.location.store as Mutable).get(zarrJsonPath);
-    if (!existingBytes) throw new Error('no zarr.json');
+  const existingBytes = await (store.location.store as Mutable).get(zarrJsonPath);
+  if (existingBytes) {
     const meta = JSON.parse(new TextDecoder().decode(existingBytes)) as Record<string, unknown>;
-    // Merge attributes into the existing metadata document
-    const merged = Object.assign({}, (meta.attributes as Record<string, unknown>) ?? {}, data);
-    meta.attributes = merged;
+    meta.attributes = Object.assign({}, (meta.attributes as Record<string, unknown>) ?? {}, data);
     await (store.location.store as Mutable).set(
       zarrJsonPath,
       new TextEncoder().encode(JSON.stringify(meta, null, 2)),
     );
-  } catch {
-    // Group doesn't exist yet — create it with the given attributes
+  } else {
     await zarr.create(loc, { attributes: data });
   }
 }
