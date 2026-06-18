@@ -45,6 +45,8 @@ async function readArray<T extends Attrs = Attrs>(store: Store, path: string): P
 
 /**
  * Write attributes to a group. Creates the group if it doesn't exist.
+ * When the group exists, merges `data` into the existing attributes and
+ * persists the updated zarr.json back to the store.
  *
  * @param store - Writable store
  * @param path  - Group path
@@ -52,13 +54,22 @@ async function readArray<T extends Attrs = Attrs>(store: Store, path: string): P
  */
 async function write(store: Store<Mutable>, path: string, data: Attrs): Promise<void> {
   const loc = path ? store.location.resolve(path) : store.location;
+  const zarrJsonPath = loc.resolve('zarr.json').path;
 
   try {
-    // Try opening existing group
-    const group = await zarr.open(loc, { kind: 'group' });
-    Object.assign(group.attrs, data);
+    // Try reading the existing zarr.json metadata
+    const existingBytes = await (store.location.store as Mutable).get(zarrJsonPath);
+    if (!existingBytes) throw new Error('no zarr.json');
+    const meta = JSON.parse(new TextDecoder().decode(existingBytes)) as Record<string, unknown>;
+    // Merge attributes into the existing metadata document
+    const merged = Object.assign({}, (meta.attributes as Record<string, unknown>) ?? {}, data);
+    meta.attributes = merged;
+    await (store.location.store as Mutable).set(
+      zarrJsonPath,
+      new TextEncoder().encode(JSON.stringify(meta, null, 2)),
+    );
   } catch {
-    // Create group with attributes
+    // Group doesn't exist yet — create it with the given attributes
     await zarr.create(loc, { attributes: data });
   }
 }
