@@ -52,3 +52,9 @@ export type { SchemaIssue, KindSchema, Registry } from './schema.js';
 
 // Registry loader
 export { loadRegistry } from './registry.js';
+
+// Typed accessors
+export {
+  readManifold, readEigenmodes, readDiagonalOperator, listFields, readField,
+} from './accessors.js';
+export type { ManifoldData, EigenData, FieldDescriptor, FieldData } from './accessors.js';
