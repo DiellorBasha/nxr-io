@@ -49,3 +49,6 @@ export { sparse } from './sparse.js';
 // Schema validation
 export { validateStore, readSchemaTag } from './schema.js';
 export type { SchemaIssue, KindSchema, Registry } from './schema.js';
+
+// Registry loader
+export { loadRegistry } from './registry.js';
