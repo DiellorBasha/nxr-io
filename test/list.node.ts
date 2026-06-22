@@ -24,7 +24,7 @@ async function main(): Promise<void> {
   check(roots.some(n => n.name === 'manifold' && n.nodeType === 'group' && n.hasChildren), 'root → manifold group (expandable)')
 
   const man = await listChildren(store, 'manifold')
-  check(man.some(n => n.name === 'mesh' && n.nodeType === 'group'), 'manifold → mesh group')
+  check(man.some(n => n.name === 'mesh' && n.nodeType === 'group' && n.hasChildren), 'manifold → mesh group (expandable)')
 
   const mesh = await listChildren(store, 'manifold/mesh')
   const verts = mesh.find(n => n.name === 'vertices')

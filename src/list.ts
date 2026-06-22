@@ -7,6 +7,7 @@
  * (uses the store's filesystem path; not for HTTP FetchStore).
  */
 import { readdir, readFile } from 'node:fs/promises'
+import type { Dirent } from 'node:fs'
 import { join } from 'node:path'
 import type { Store } from './store.js'
 
@@ -27,18 +28,16 @@ async function nodeTypeAt(dir: string): Promise<'group' | 'array' | null> {
   }
 }
 
-/** True if `dir` (a group) has at least one Zarr child node (explicit or implicit). */
-async function hasChildNodes(dir: string): Promise<boolean> {
-  let entries: import('node:fs').Dirent[]
+/** True if `dir` (a group) has at least one Zarr child node. Bounded peek. */
+async function hasChildNodes(dir: string, depth = 0): Promise<boolean> {
+  if (depth > 1) return true // beyond peek depth, assume expandable
+  let entries: Dirent[]
   try { entries = await readdir(dir, { withFileTypes: true }) } catch { return false }
   for (const e of entries) {
     if (!e.isDirectory()) continue
     const childDir = join(dir, e.name)
-    const nodeType = await nodeTypeAt(childDir)
-    // Found an explicit node (array or group)
-    if (nodeType !== null) return true
-    // Or an implicit group (directory with Zarr children but no zarr.json)
-    if (await hasChildNodes(childDir)) return true
+    if ((await nodeTypeAt(childDir)) !== null) return true
+    if (await hasChildNodes(childDir, depth + 1)) return true
   }
   return false
 }
@@ -47,7 +46,7 @@ export async function listChildren(store: Store, path: string): Promise<NodeEntr
   // store.url is the filesystem root the store was opened at (openLocal/create).
   const root = store.url
   const groupDir = path ? join(root, path) : root
-  let entries: import('node:fs').Dirent[]
+  let entries: Dirent[]
   try { entries = await readdir(groupDir, { withFileTypes: true }) } catch { return [] }
 
   const out: NodeEntry[] = []
@@ -55,16 +54,13 @@ export async function listChildren(store: Store, path: string): Promise<NodeEntr
     if (!e.isDirectory()) continue
     const childDir = join(groupDir, e.name)
     const nodeType = await nodeTypeAt(childDir)
-
-    // A directory is a valid node if it has zarr.json, OR if it's an implicit group
-    // (contains Zarr child nodes but no zarr.json of its own).
-    if (!nodeType && !(await hasChildNodes(childDir))) continue
-
+    const implicitGroup = nodeType === null ? await hasChildNodes(childDir) : false
+    if (nodeType === null && !implicitGroup) continue
     out.push({
       name: e.name,
       path: path ? `${path}/${e.name}` : e.name,
-      nodeType: nodeType || 'group', // Implicit groups are treated as groups
-      hasChildren: nodeType === 'array' ? false : await hasChildNodes(childDir),
+      nodeType: nodeType ?? 'group',
+      hasChildren: nodeType === 'array' ? false : (nodeType === null ? implicitGroup : await hasChildNodes(childDir)),
     })
   }
   out.sort((a, b) => a.name.localeCompare(b.name))
