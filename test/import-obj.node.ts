@@ -18,14 +18,14 @@ async function main(): Promise<void> {
   await fs.mkdir(dir, { recursive: true });
 
   const objPath = path.join(dir, 'tri.obj');
-  // mix face syntaxes: plain, v/vt, v/vt/vn — first index of each tuple is the vertex
-  writeFileSync(objPath, 'v 0 0 0\nv 1 0 0\nv 0 1 0\nf 1/1 2/2 3/3\n');
+  // faces span all four OBJ token syntaxes: plain (1), v/vt (2/2), v//vn (3//3), v/vt/vn (1/1/1)
+  writeFileSync(objPath, 'v 0 0 0\nv 1 0 0\nv 0 1 0\nf 1 2/2 3//3\nf 1/1/1 3 2\n');
   const fieldsPath = path.join(dir, 'tri.fields.json');
   writeFileSync(fieldsPath, JSON.stringify({ scalar: [{ name: 'height', domain: 'vertex', values: [0.1, 0.2, 0.3] }] }));
   const out = path.join(dir, 'tri.nxr.zarr');
 
   const res = await importObj(objPath, { out, fields: fieldsPath, subject: 'tri' });
-  check(res.nV === 3 && res.nF === 1, 'import counts');
+  check(res.nV === 3 && res.nF === 2, 'import counts');
   check(res.fields.length === 1 && res.fields[0] === 'height', 'import fields');
 
   const store = await openLocal(out);
