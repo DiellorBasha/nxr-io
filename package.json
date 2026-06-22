@@ -24,6 +24,7 @@
     "test:accessors": "tsx test/accessors.node.ts",
     "test:import": "tsx test/import-obj.node.ts",
     "test:list": "tsx test/list.node.ts",
+    "test:crud": "tsx test/crud.node.ts",
     "test:crosslang": "tsx test/crosslang.node.ts",
     "build:wasm": "bash scripts/build-wasm.sh",
     "test:wasm": "node test/wasm.smoke.mjs",

@@ -63,6 +63,9 @@ export type { ManifoldData, EigenData, FieldDescriptor, FieldData } from './acce
 export { listChildren } from './list.js';
 export type { NodeEntry } from './list.js';
 
+// Structural CRUD
+export { remove, move } from './crud.js';
+
 // Import surface
 export { importObj } from './import/obj.js';
 export type { ImportObjOptions, ImportObjResult } from './import/obj.js';
