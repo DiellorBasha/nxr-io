@@ -59,6 +59,10 @@ export {
 } from './accessors.js';
 export type { ManifoldData, EigenData, FieldDescriptor, FieldData } from './accessors.js';
 
+// Structural listing
+export { listChildren } from './list.js';
+export type { NodeEntry } from './list.js';
+
 // Import surface
 export { importObj } from './import/obj.js';
 export type { ImportObjOptions, ImportObjResult } from './import/obj.js';
