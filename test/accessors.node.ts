@@ -46,6 +46,10 @@ async function main(): Promise<void> {
   await attrs.write(store, 'field', { names: ['height'] });
   const fl = await listFields(store);
   check(fl.length === 1 && fl[0].name === 'height' && fl[0].kind === 'scalar', 'listFields');
+  // A stale name with no field/<name> group must be skipped, not throw.
+  await attrs.write(store, 'field', { names: ['height', 'ghost'] });
+  const fl2 = await listFields(store);
+  check(fl2.length === 1 && fl2[0].name === 'height', 'listFields skips stale names');
   const fv = await readField(store, 'height');
   check(fv.values.length === 4 && fv.shape[0] === 4 && fv.domain === 'vertex', 'readField');
 

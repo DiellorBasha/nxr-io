@@ -48,14 +48,18 @@ export async function listFields(store: Store): Promise<FieldDescriptor[]> {
   } catch { return []; }
   const out: FieldDescriptor[] = [];
   for (const name of names) {
-    const a = (await attrs.read(store, `field/${name}`)) as Record<string, unknown>;
-    out.push({
-      name,
-      kind: String(a.kind ?? 'scalar'),
-      domain: String(a.domain ?? 'vertex'),
-      units: typeof a.units === 'string' ? a.units : undefined,
-      range_hint: Array.isArray(a.range_hint) ? (a.range_hint as number[]) : undefined,
-    });
+    try {
+      const a = (await attrs.read(store, `field/${name}`)) as Record<string, unknown>;
+      out.push({
+        name,
+        kind: String(a.kind ?? 'scalar'),
+        domain: String(a.domain ?? 'vertex'),
+        units: typeof a.units === 'string' ? a.units : undefined,
+        range_hint: Array.isArray(a.range_hint) ? (a.range_hint as number[]) : undefined,
+      });
+    } catch {
+      console.warn(`[nxr/io] listFields: skipping "${name}" — field group unreadable`);
+    }
   }
   return out;
 }
