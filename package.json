@@ -22,6 +22,7 @@
     "test:schema": "tsx test/schema.node.ts",
     "test:registry": "tsx test/registry.node.ts",
     "test:accessors": "tsx test/accessors.node.ts",
+    "test:import": "tsx test/import-obj.node.ts",
     "test:crosslang": "tsx test/crosslang.node.ts",
     "build:wasm": "bash scripts/build-wasm.sh",
     "test:wasm": "node test/wasm.smoke.mjs",

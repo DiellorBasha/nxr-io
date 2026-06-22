@@ -58,3 +58,7 @@ export {
   readManifold, readEigenmodes, readDiagonalOperator, listFields, readField,
 } from './accessors.js';
 export type { ManifoldData, EigenData, FieldDescriptor, FieldData } from './accessors.js';
+
+// Import surface
+export { importObj } from './import/obj.js';
+export type { ImportObjOptions, ImportObjResult } from './import/obj.js';
