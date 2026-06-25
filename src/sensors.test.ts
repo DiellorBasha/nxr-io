@@ -1,7 +1,7 @@
 // vendor/nxr-io/src/sensors.test.ts
 import { describe, it, expect, beforeAll } from 'vitest';
 import { openLocal } from './store.js';
-import { readSensorChannels, listSensorRecordings } from './sensors.js';
+import { readSensorChannels, listSensorRecordings, readSensorRecording, readSensorWindow } from './sensors.js';
 import { writeSensorStore } from '../../../scripts/gen-nxr-fixtures.mjs';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -23,5 +23,23 @@ describe('@nxr/io sensors', () => {
   it('listSensorRecordings finds sessions', async () => {
     const store = await openLocal(dir);
     expect(await listSensorRecordings(store)).toContain('session_001');
+  });
+
+  it('readSensorRecording returns [nChan*nTime] + meta', async () => {
+    const store = await openLocal(dir);
+    const r = await readSensorRecording(store, 'session_001');
+    expect(r.nChan).toBe(4);
+    expect(r.nTime).toBe(500);
+    expect(r.data.length).toBe(2000);
+    expect(r.sfreq).toBe(250);
+    expect(r.events.length).toBeGreaterThan(0);
+  });
+
+  it('readSensorWindow slices the time axis', async () => {
+    const store = await openLocal(dir);
+    const w = await readSensorWindow(store, 'session_001', 100, 200);
+    expect(w.nTime).toBe(100);
+    expect(w.data.length).toBe(4 * 100);
+    expect(w.times[0]).toBeCloseTo(100 / 250, 10);
   });
 });

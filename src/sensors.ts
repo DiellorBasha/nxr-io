@@ -9,7 +9,7 @@
  *   sensors/flags                    int8    [nChan]  (+1 good / -1 bad)
  *   sensors/recordings/<session>/    groups
  */
-import { read } from './read.js';
+import { read, meta } from './read.js';
 import { attrs } from './attrs.js';
 import { listChildren } from './list.js';
 import type { Store } from './store.js';
@@ -38,4 +38,66 @@ export async function listSensorRecordings(store: Store): Promise<string[]> {
     const kids = await listChildren(store, 'sensors/recordings');
     return kids.filter((k) => k.nodeType === 'group').map((k) => k.name);
   } catch { return []; }
+}
+
+// ─── Recording accessors ──────────────────────────────────────────────────────
+
+export interface SensorRecordingData {
+  data: Float32Array;
+  nChan: number;
+  nTime: number;
+  times: Float64Array;
+  sfreq: number;
+  modality: string;
+  dataType: 'recordings' | 'raw';
+  events: { name: string; time: number; channel: number }[];
+}
+
+function parseEvents(a: Record<string, unknown>): { name: string; time: number; channel: number }[] {
+  const names = (a.event_names as string[]) ?? [];
+  const times = (a.event_times as number[]) ?? [];
+  const chans = (a.event_channels as number[]) ?? [];
+  return names.map((name, i) => ({ name, time: times[i] ?? 0, channel: chans[i] ?? -1 }));
+}
+
+export async function readSensorRecording(store: Store, session: string): Promise<SensorRecordingData> {
+  const base = `sensors/recordings/${session}`;
+  const a = (await attrs.read(store, base)) as Record<string, unknown>;
+  const m = await meta(store, `${base}/data`);
+  const [nChan, nTime] = m.shape;
+  const data = await read<Float32Array>(store, `${base}/data`, { as: 'float32' });
+  const times = await read<Float64Array>(store, `${base}/times`);
+  return {
+    data,
+    nChan,
+    nTime,
+    times,
+    sfreq: Number(a.sfreq ?? 0),
+    modality: String(a.modality ?? 'MEG'),
+    dataType: (a.data_type as 'recordings' | 'raw') ?? 'recordings',
+    events: parseEvents(a),
+  };
+}
+
+export async function readSensorWindow(
+  store: Store,
+  session: string,
+  s0: number,
+  s1: number,
+): Promise<{ data: Float32Array; nChan: number; nTime: number; times: Float64Array }> {
+  const base = `sensors/recordings/${session}`;
+  const m = await meta(store, `${base}/data`);
+  const [nChan, nTimeTotal] = m.shape;
+  const lo = Math.max(0, s0);
+  const hi = Math.min(nTimeTotal, s1);
+  const nTime = hi - lo;
+  // Correctness-first: read full row-major [nChan, nTimeTotal] then copy the column band [lo, hi).
+  // TODO(perf): replace with chunk-aligned zarrita slice once read() exposes ranges.
+  const full = await read<Float32Array>(store, `${base}/data`, { as: 'float32' });
+  const data = new Float32Array(nChan * nTime);
+  for (let c = 0; c < nChan; c++) {
+    data.set(full.subarray(c * nTimeTotal + lo, c * nTimeTotal + hi), c * nTime);
+  }
+  const allTimes = await read<Float64Array>(store, `${base}/times`);
+  return { data, nChan, nTime, times: allTimes.slice(lo, hi) };
 }
