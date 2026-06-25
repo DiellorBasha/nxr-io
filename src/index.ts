@@ -66,6 +66,10 @@ export type { NodeEntry } from './list.js';
 // Structural CRUD
 export { remove, move } from './crud.js';
 
+// Sensor accessors
+export { readSensorChannels, listSensorRecordings } from './sensors.js';
+export type { SensorChannelData } from './sensors.js';
+
 // Import surface
 export { importObj } from './import/obj.js';
 export type { ImportObjOptions, ImportObjResult } from './import/obj.js';
