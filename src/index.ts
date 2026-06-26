@@ -67,8 +67,8 @@ export type { NodeEntry } from './list.js';
 export { remove, move } from './crud.js';
 
 // Sensor accessors
-export { readSensorChannels, listSensorRecordings, readSensorRecording, readSensorWindow } from './sensors.js';
-export type { SensorChannelData, SensorRecordingData } from './sensors.js';
+export { readSensorChannels, listSensorRecordings, readSensorRecording, readSensorWindow, readSensorMeta } from './sensors.js';
+export type { SensorChannelData, SensorRecordingData, SensorMeta } from './sensors.js';
 
 // Inverse operator accessors
 export { readInverse, listInverse } from './inverse.js';

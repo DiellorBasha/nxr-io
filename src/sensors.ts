@@ -79,6 +79,39 @@ export async function readSensorRecording(store: Store, session: string): Promis
   };
 }
 
+export interface SensorMeta {
+  nChan: number;
+  nTime: number;
+  sfreq: number;
+  tmin: number;
+  modality: string;
+  dataType: 'recordings' | 'raw';
+  events: { name: string; time: number; channel: number }[];
+}
+
+/** Recording shape/time/events WITHOUT reading the data array (paging foundation). */
+export async function readSensorMeta(store: Store, session: string): Promise<SensorMeta> {
+  const base = `sensors/recordings/${session}`;
+  const a = (await attrs.read(store, base)) as Record<string, unknown>;
+  const m = await meta(store, `${base}/data`);
+  const [nChan, nTime] = m.shape;
+  let tmin = Number(a.tmin ?? NaN);
+  if (Number.isNaN(tmin)) {
+    // read.ts does not support slicing — read the full times array (tiny) and take [0]
+    const times = await read<Float64Array>(store, `${base}/times`);
+    tmin = times[0] ?? 0;
+  }
+  return {
+    nChan,
+    nTime,
+    sfreq: Number(a.sfreq ?? 0),
+    tmin,
+    modality: String(a.modality ?? 'MEG'),
+    dataType: (a.data_type as 'recordings' | 'raw') ?? 'recordings',
+    events: parseEvents(a),
+  };
+}
+
 export async function readSensorWindow(
   store: Store,
   session: string,
