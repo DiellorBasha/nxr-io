@@ -24,6 +24,8 @@ export interface InverseData {
   sourceRr: Float32Array;
   method: string;
   chNames: string[];
+  whitener: Float64Array | null;
+  noiseCov: Float64Array | null;
 }
 
 export async function readInverse(store: Store): Promise<InverseData> {
@@ -34,6 +36,10 @@ export async function readInverse(store: Store): Promise<InverseData> {
   const W = await read<Float64Array>(store, 'maps/inverse/W', { as: 'float64' });
   const sourceNn = await read<Float32Array>(store, 'maps/forward/source_nn', { as: 'float32' });
   const sourceRr = await read<Float32Array>(store, 'maps/forward/source_rr', { as: 'float32' });
+  let whitener: Float64Array | null = null;
+  let noiseCov: Float64Array | null = null;
+  try { whitener = await read<Float64Array>(store, 'maps/inverse/whitener', { as: 'float64' }); } catch { /* optional */ }
+  try { noiseCov = await read<Float64Array>(store, 'maps/inverse/noise_cov', { as: 'float64' }); } catch { /* optional */ }
   return {
     W,
     nsrc,
@@ -43,6 +49,8 @@ export async function readInverse(store: Store): Promise<InverseData> {
     sourceRr,
     method: String(inv.method ?? ''),
     chNames: (inv.ch_names as string[]) ?? [],
+    whitener,
+    noiseCov,
   };
 }
 
