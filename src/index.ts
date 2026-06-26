@@ -70,6 +70,10 @@ export { remove, move } from './crud.js';
 export { readSensorChannels, listSensorRecordings, readSensorRecording, readSensorWindow } from './sensors.js';
 export type { SensorChannelData, SensorRecordingData } from './sensors.js';
 
+// Inverse operator accessors
+export { readInverse, listInverse } from './inverse.js';
+export type { InverseData } from './inverse.js';
+
 // Import surface
 export { importObj } from './import/obj.js';
 export type { ImportObjOptions, ImportObjResult } from './import/obj.js';
