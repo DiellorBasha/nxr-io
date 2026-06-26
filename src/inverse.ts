@@ -31,7 +31,7 @@ export async function readInverse(store: Store): Promise<InverseData> {
   const fwd = (await attrs.read(store, 'maps/forward')) as Record<string, unknown>;
   const m = await meta(store, 'maps/inverse/W');
   const [nsrc, M] = m.shape;
-  const W = await read<Float64Array>(store, 'maps/inverse/W');
+  const W = await read<Float64Array>(store, 'maps/inverse/W', { as: 'float64' });
   const sourceNn = await read<Float32Array>(store, 'maps/forward/source_nn', { as: 'float32' });
   const sourceRr = await read<Float32Array>(store, 'maps/forward/source_rr', { as: 'float32' });
   return {
