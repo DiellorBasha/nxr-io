@@ -13,6 +13,7 @@ import type { TypedArray } from './types.js';
 
 export interface ManifoldData {
   vertices: Float64Array; faces: Int32Array; normals: Float64Array | null; nV: number; nF: number;
+  transform: Float64Array | null; units: string | null;
 }
 
 export async function readManifold(store: Store): Promise<ManifoldData> {
@@ -20,7 +21,14 @@ export async function readManifold(store: Store): Promise<ManifoldData> {
   const faces = await read<Int32Array>(store, 'manifold/mesh/faces');
   let normals: Float64Array | null = null;
   try { normals = await read<Float64Array>(store, 'manifold/geometry/vertex_normals'); } catch { /* optional */ }
-  return { vertices, faces, normals, nV: vertices.length / 3, nF: faces.length / 3 };
+  let transform: Float64Array | null = null;
+  let units: string | null = null;
+  try {
+    const a = (await attrs.read(store, 'manifold')) as Record<string, unknown>;
+    if (Array.isArray(a.world_transform) && a.world_transform.length === 16) transform = Float64Array.from(a.world_transform as number[]);
+    if (typeof a.units === 'string') units = a.units;
+  } catch { /* optional */ }
+  return { vertices, faces, normals, nV: vertices.length / 3, nF: faces.length / 3, transform, units };
 }
 
 export interface EigenData { eigenvalues: Float64Array; eigenvectors: Float64Array; K: number; nV: number; }
