@@ -91,6 +91,7 @@ export async function readSensorWindow(
   const lo = Math.max(0, s0);
   const hi = Math.min(nTimeTotal, s1);
   const nTime = hi - lo;
+  if (nTime <= 0) return { data: new Float32Array(0), nChan, nTime: 0, times: new Float64Array(0) };
   // Correctness-first: read full row-major [nChan, nTimeTotal] then copy the column band [lo, hi).
   // TODO(perf): replace with chunk-aligned zarrita slice once read() exposes ranges.
   const full = await read<Float32Array>(store, `${base}/data`, { as: 'float32' });

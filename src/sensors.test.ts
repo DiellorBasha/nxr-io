@@ -42,4 +42,12 @@ describe('@nxr/io sensors', () => {
     expect(w.data.length).toBe(4 * 100);
     expect(w.times[0]).toBeCloseTo(100 / 250, 10);
   });
+
+  it('readSensorWindow returns empty for a degenerate (s0 >= s1) window', async () => {
+    const store = await openLocal(dir);
+    const w = await readSensorWindow(store, 'session_001', 200, 100);
+    expect(w.nTime).toBe(0);
+    expect(w.data.length).toBe(0);
+    expect(w.times.length).toBe(0);
+  });
 });
