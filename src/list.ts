@@ -1,12 +1,14 @@
 /**
  * @nxr/io — structural listing.
  *
- * listChildren walks a Zarr v3 store's group structure by reading directory
- * entries (node:fs) and each child's zarr.json node_type. Names + type +
- * expandable hint only — no shapes/dtypes/values. Node/local-store scoped
- * (uses the store's filesystem path; not for HTTP FetchStore).
+ * listChildren walks a Zarr store's group structure by reading directory
+ * entries (node:fs) and each child's node-type marker. Supports both:
+ *   - Zarr v3: zarr.json with "node_type" field
+ *   - Zarr v2: .zarray (→ 'array') or .zgroup (→ 'group')
+ * Names + type + expandable hint only — no shapes/dtypes/values.
+ * Node/local-store scoped (uses the store's filesystem path; not for HTTP FetchStore).
  */
-import { readdir, readFile } from 'node:fs/promises'
+import { readdir, readFile, access } from 'node:fs/promises'
 import type { Dirent } from 'node:fs'
 import { join } from 'node:path'
 import type { Store } from './store.js'
@@ -18,14 +20,40 @@ export interface NodeEntry {
   hasChildren: boolean
 }
 
-/** node_type from a child dir's zarr.json, or null if it isn't a Zarr node. */
+/**
+ * Determine the Zarr node type for a directory.
+ *
+ * Resolution order (back-compat: v3 wins when present):
+ *   1. zarr.json → "node_type" field (Zarr v3)
+ *   2. .zarray present (Zarr v2 array)
+ *   3. .zgroup present (Zarr v2 group)
+ *   4. null — not a Zarr node
+ */
 async function nodeTypeAt(dir: string): Promise<'group' | 'array' | null> {
+  // v3: zarr.json with node_type
   try {
-    const meta = JSON.parse(await readFile(join(dir, 'zarr.json'), 'utf8')) as { node_type?: string }
-    return meta.node_type === 'array' ? 'array' : meta.node_type === 'group' ? 'group' : null
+    const meta = JSON.parse(await readFile(join(dir, 'zarr.json'), 'utf8')) as { node_type?: string };
+    if (meta.node_type === 'array' || meta.node_type === 'group') {
+      return meta.node_type;
+    }
   } catch {
-    return null
+    // not a v3 node — fall through to v2 detection
   }
+  // v2: .zarray
+  try {
+    await access(join(dir, '.zarray'));
+    return 'array';
+  } catch {
+    // no .zarray
+  }
+  // v2: .zgroup
+  try {
+    await access(join(dir, '.zgroup'));
+    return 'group';
+  } catch {
+    // no .zgroup
+  }
+  return null;
 }
 
 /** True if `dir` (a group) has at least one Zarr child node. Bounded peek. */
