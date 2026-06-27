@@ -1,7 +1,7 @@
 // vendor/nxr-io/src/sensors.test.ts
 import { describe, it, expect, beforeAll } from 'vitest';
 import { openLocal } from './store.js';
-import { readSensorChannels, listSensorRecordings, readSensorRecording, readSensorWindow } from './sensors.js';
+import { readSensorChannels, listSensorRecordings, readSensorRecording, readSensorWindow, readSensorMeta } from './sensors.js';
 import { writeSensorStore } from '../../../scripts/gen-nxr-fixtures.mjs';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -49,5 +49,14 @@ describe('@nxr/io sensors', () => {
     expect(w.nTime).toBe(0);
     expect(w.data.length).toBe(0);
     expect(w.times.length).toBe(0);
+  });
+
+  it('readSensorMeta returns metadata without the data array', async () => {
+    const store = await openLocal(dir);
+    const m = await readSensorMeta(store, 'session_001');
+    expect(m.nChan).toBe(4);
+    expect(m.nTime).toBe(500);
+    expect(m.sfreq).toBe(250);
+    expect((m as any).data).toBeUndefined();
   });
 });
