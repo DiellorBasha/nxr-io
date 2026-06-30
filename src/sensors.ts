@@ -125,13 +125,14 @@ export async function readSensorWindow(
   const hi = Math.min(nTimeTotal, s1);
   const nTime = hi - lo;
   if (nTime <= 0) return { data: new Float32Array(0), nChan, nTime: 0, times: new Float64Array(0) };
-  // Correctness-first: read full row-major [nChan, nTimeTotal] then copy the column band [lo, hi).
-  // TODO(perf): replace with chunk-aligned zarrita slice once read() exposes ranges.
-  const full = await read<Float32Array>(store, `${base}/data`, { as: 'float32' });
-  const data = new Float32Array(nChan * nTime);
-  for (let c = 0; c < nChan; c++) {
-    data.set(full.subarray(c * nTimeTotal + lo, c * nTimeTotal + hi), c * nTime);
-  }
+  // Chunk-aligned read of the time band [lo, hi) across all channels — fetches
+  // only the covering chunks instead of the whole (GB-scale) recording.
+  const data = await read<Float32Array>(store, `${base}/data`, {
+    slice: [[0, nChan], [lo, hi]], as: 'float32',
+  });
+  // `times` is tiny (one row of f64); a whole read + JS slice is negligible and
+  // tolerates both [T] and [1, T] layouts.
   const allTimes = await read<Float64Array>(store, `${base}/times`);
-  return { data, nChan, nTime, times: allTimes.slice(lo, hi) };
+  const times = allTimes.slice(lo, hi);
+  return { data, nChan, nTime, times };
 }
