@@ -46,6 +46,6 @@ describe('read() slice', () => {
     const data = await read<Float32Array>(store as any, 'a2d', { slice: [[0, 3], [25, 45]], as: 'float32' });
     expect(data.length).toBe(3 * 20);
     const fetched = chunkKeys(keys, '/a2d');
-    expect(fetched.length).toBeLessThanOrEqual(3);   // NOT all 10 chunks
+    expect(fetched.length).toBe(3);   // NOT all 10 chunks
   });
 });

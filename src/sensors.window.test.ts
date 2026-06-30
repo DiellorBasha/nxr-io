@@ -35,6 +35,7 @@ describe('readSensorWindow chunk-aligned read', () => {
     const w = await readSensorWindow(store as any, 'session_001', 150, 200);
     expect(w.nTime).toBe(50);
     const fetched = chunkKeys(keys, '/sensors/recordings/session_001/data');
-    expect(fetched.length).toBeLessThanOrEqual(1);   // NOT all 4 chunks
+    // NOTE: fixtures are Zarr v3 (keys .../c/0/1); production sensor stores are v2 (.../0.1). Chunk selection is zarrita-abstracted across both, but this proof runs on v3.
+    expect(fetched.length).toBe(1);   // NOT all 4 chunks
   });
 });
