@@ -5,10 +5,8 @@
  */
 
 import * as zarr from 'zarrita';
-import type { Readable } from '@zarrita/storage';
-import type { DataType as ZarrDataType } from 'zarrita';
 import type { Store } from './store.js';
-import type { TypedArray, ArrayMeta, ReadOptions, Attrs } from './types.js';
+import type { TypedArray, ArrayMeta, ReadOptions } from './types.js';
 
 // ─── Array Data ─────────────────────────────────────────────────────────────
 
