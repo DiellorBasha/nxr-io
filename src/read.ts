@@ -31,7 +31,12 @@ export async function read<T extends TypedArray = Float64Array>(
 ): Promise<T> {
   const loc = store.location.resolve(path);
   const array = await zarr.open(loc, { kind: 'array' });
-  const chunk = await zarr.get(array);
+
+  // Chunk-aligned slice: one [start, stop] per dimension. zarrita fetches only
+  // the chunks intersecting the selection.
+  const chunk = opts?.slice
+    ? await zarr.get(array, opts.slice.map(([lo, hi]) => zarr.slice(lo, hi)))
+    : await zarr.get(array);
 
   let data = (chunk as any).data as TypedArray;
   if (!data) {
