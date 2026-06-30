@@ -19,6 +19,9 @@ export interface SensorChannelData {
   types: string[];
   positions: Float32Array;
   flags: Int8Array;
+  /** Modality codes present in this sensor set (e.g. ['MEG GRAD', 'MEG MAG']).
+   *  May be a single string or an array; undefined when absent from store attrs. */
+  modalities?: string | string[];
 }
 
 export async function readSensorChannels(store: Store): Promise<SensorChannelData> {
@@ -30,6 +33,7 @@ export async function readSensorChannels(store: Store): Promise<SensorChannelDat
     types: (a.channel_types as string[]) ?? [],
     positions,
     flags,
+    modalities: a.modalities as string | string[] | undefined,
   };
 }
 
