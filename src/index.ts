@@ -74,6 +74,10 @@ export type { SensorChannelData, SensorRecordingData, SensorMeta } from './senso
 export { readInverse, listInverse } from './inverse.js';
 export type { InverseData } from './inverse.js';
 
+// Timeseries accessors (generic, type-agnostic)
+export { readTimeseriesMeta, readTimeseriesWindow, listTimeseries } from './timeseries.js';
+export type { TimeseriesMeta } from './timeseries.js';
+
 // Import surface
 export { importObj } from './import/obj.js';
 export type { ImportObjOptions, ImportObjResult } from './import/obj.js';
