@@ -1,0 +1,32 @@
+{
+  "$schema": "./nxr.meta.schema.json",
+  "$id": "https://nxr.dev/schema/nxr.timeseries.schema.json",
+  "kind": "nxr.timeseries",
+  "version": "1.0",
+  "title": "NXR Timeseries (on-disk, type-agnostic)",
+  "description": "A generic time-varying signal. The defining attribute is the time axis (sfreq + n_samples + origin_sec); the non-time dimensions are unconstrained (channels, vertices, or none). `kind` tags the semantic interpretation (sensor, source, ...) for the application; nxr-io reads it agnostically. Time is the LAST axis. There is no stored times array — the time vector is derived from attributes.",
+
+  "dims": {
+    "K": "non-time element count (channels, vertices, ...); may be absent for a single trace",
+    "T": "number of time samples"
+  },
+
+  "attributes": {
+    "schema":       { "type": "string", "const": "nxr.timeseries@1.0", "required": true },
+    "kind":         { "type": "string", "required": true, "description": "Semantic tag, e.g. 'sensor' or 'source'. Interpreted by the application, not nxr-io." },
+    "axes":         { "type": "string[]", "required": true, "description": "Dimension names; the LAST must be 'time'. E.g. ['channel','time'] or ['vertex','time']." },
+    "sfreq":        { "type": "float", "required": true, "description": "Sampling rate, Hz." },
+    "n_samples":    { "type": "int", "required": true, "description": "= T. Duration = n_samples / sfreq." },
+    "origin_sec":   { "type": "float", "required": true, "description": "Absolute time of sample 0, seconds." },
+    "metadata_ref": { "type": "string", "description": "Optional path to a metadata group for this kind, e.g. 'sensors'." },
+    "units":        { "type": "string", "description": "Physical units of the data." }
+  },
+
+  "arrays": {
+    "data": {
+      "dtype": "float32", "shape": ["K", "T"], "storage": "row_major", "required": true,
+      "chunks": ["K", 4000],
+      "description": "Signal values; time is the LAST axis. Time-windowed chunking (~few seconds per chunk) for streaming."
+    }
+  }
+}

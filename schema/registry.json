@@ -5,6 +5,7 @@
     "nxr.manifold@1.0":   "nxr.manifold.schema.json",
     "nxr.field@1.0":      "nxr.field.schema.json",
     "nxr.recordings@1.0": "nxr.recordings.schema.json",
+    "nxr.timeseries@1.0": "nxr.timeseries.schema.json",
     "nxr.maps@1.0":       "nxr.maps.schema.json"
   }
 }
