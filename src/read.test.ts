@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { createLocal, write, group } from '@nxr/io';
 import { read } from './read.js';
-import { openLocal } from './store.js';
+import { openLocal } from './store-node.js';
 import { countingStore, chunkKeys } from '../../../scripts/counting-store.mjs';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';

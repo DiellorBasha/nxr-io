@@ -6,7 +6,7 @@
  * nxr-io import surface; the basis for future Brainstorm / FreeSurfer importers.
  */
 import { readFileSync } from 'node:fs';
-import { createLocal } from '../store.js';
+import { createLocal } from '../store-node.js';
 import { write } from '../write.js';
 import { attrs } from '../attrs.js';
 

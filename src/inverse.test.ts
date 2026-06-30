@@ -1,6 +1,6 @@
 // vendor/nxr-io/src/inverse.test.ts
 import { describe, it, expect, beforeAll } from 'vitest';
-import { openLocal } from './store.js';
+import { openLocal } from './store-node.js';
 import { readInverse, listInverse } from './inverse.js';
 import { writeInverseStore } from '../../../scripts/gen-nxr-fixtures.mjs';
 import { mkdtempSync } from 'node:fs'; import { tmpdir } from 'node:os'; import { join } from 'node:path';

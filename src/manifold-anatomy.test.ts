@@ -4,7 +4,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createLocal, openLocal } from './store.js';
+import { createLocal, openLocal } from './store-node.js';
 import { group } from './group.js';
 import { write } from './write.js';
 import { readManifold } from './accessors.js';

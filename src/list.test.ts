@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { openLocal } from './store.js';
+import { openLocal } from './store-node.js';
 import { listChildren } from './list.js';
 
 // ─── helpers ────────────────────────────────────────────────────────────────

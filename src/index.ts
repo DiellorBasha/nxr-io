@@ -29,7 +29,8 @@ export type {
 
 // Store
 export type { Store, ReadStore, WriteStore } from './store.js';
-export { open, create, openLocal, createLocal } from './store.js';
+export { open, create } from './store.js';
+export { openLocal, createLocal } from './store-node.js';
 
 // Read
 export { read, meta } from './read.js';

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from 'vitest';
-import { openLocal } from './store.js';
+import { openLocal } from './store-node.js';
 import { readSensorWindow, readSensorRecording } from './sensors.js';
 import { writeSensorStore } from '../../../scripts/gen-nxr-fixtures.mjs';
 import { countingStore, chunkKeys } from '../../../scripts/counting-store.mjs';

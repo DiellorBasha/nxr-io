@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from 'vitest';
-import { openLocal } from './store.js';
+import { openLocal } from './store-node.js';
 import { readTimeseriesMeta, readTimeseriesWindow, listTimeseries } from './timeseries.js';
 import { writeTimeseriesStore } from '../../../scripts/gen-nxr-fixtures.mjs';
 import { mkdtempSync } from 'node:fs';
